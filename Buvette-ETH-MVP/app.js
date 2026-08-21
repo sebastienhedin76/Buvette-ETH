@@ -118,8 +118,8 @@ async function debit(productId, button) {
 function hideUndo(){$('undoBar').classList.add('hidden');lastDebit=null}
 $('undoBtn').onclick=async()=>{if(!lastDebit)return;const {error}=await supabase.rpc('reverse_transaction',{p_transaction_id:lastDebit});if(error)return toast(error.message,true);hideUndo();toast('Débit annulé')};
 
-$('memberForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.from('customers').insert({full_name:$('memberName').value.trim(),member_number:$('memberNumber').value.trim()});if(error)return toast(error.message,true);e.target.reset();toast('Adhérent ajouté')});
-function renderCreditOptions(){$('creditCustomer').innerHTML='<option value="">Choisir…</option>'+customers.filter(c=>c.active).map(c=>`<option value="${c.id}">${esc(c.full_name)} — ${esc(c.member_number)} (${money(c.balance_cents)})</option>`).join('')}
+$('memberForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.from('customers').insert({full_name:$('memberName').value.trim(),member_number:'A'+Date.now()});if(error)return toast(error.message,true);e.target.reset();toast('Adhérent ajouté')});
+function renderCreditOptions(){$('creditCustomer').innerHTML='<option value="">Choisir…</option>'+customers.filter(c=>c.active).map(c=>`<option value="${c.id}">${esc(c.full_name)} (${money(c.balance_cents)})</option>`).join('')}
 $('paymentMethod').onchange=()=>{$('chequeRefLabel').classList.toggle('hidden',$('paymentMethod').value!=='cheque');$('chequeRef').required=$('paymentMethod').value==='cheque'};
 $('creditForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.rpc('credit_customer',{p_customer_id:$('creditCustomer').value,p_amount_cents:cents($('creditAmount').value),p_payment_method:$('paymentMethod').value,p_cheque_reference:$('paymentMethod').value==='cheque'?$('chequeRef').value.trim():null,p_request_id:crypto.randomUUID()});if(error)return toast(error.message,true);e.target.reset();$('chequeRefLabel').classList.add('hidden');toast('Compte crédité')});
 function renderMembers() {
