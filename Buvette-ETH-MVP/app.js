@@ -156,6 +156,7 @@ async function deleteMember(memberId) {
   }
 
   toast('Membre supprimé avec succès');
+  await loadCustomers(); // Rafraîchit la liste des membres
 }
 function renderHistory(rows){$('historyList').innerHTML=`<table><thead><tr><th>Date</th><th>Adhérent</th><th>Opération</th><th>Montant</th><th>Staff</th></tr></thead><tbody>${rows.map(r=>{const credit=r.amount_cents>0;const label=r.type==='credit'?'Crédit '+(r.payment_method==='cheque'?'chèque':'espèces'):r.type==='reversal'?'Annulation':r.products?.name||'Débit';return `<tr><td>${new Date(r.created_at).toLocaleString('fr-FR')}</td><td>${esc(r.customers?.full_name)}</td><td>${esc(label)}</td><td class="amount ${credit?'credit':'debit'}">${credit?'+':''}${money(r.amount_cents)}</td><td>${esc(r.profiles?.display_name)}</td></tr>`}).join('')}</tbody></table>`}
 
