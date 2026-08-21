@@ -35,37 +35,12 @@ async function loadHistory(){
   if(error)return toast(error.message,true);renderHistory(data||[])
 }
 function subscribeRealtime() {
-  supabase.removeAllChannels();
-  
-  supabase.channel('buvette-live')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'transactions' },
-      () => {
-        console.log('Changement détecté dans transactions');
-        loadCustomers();
-        loadHistory();
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'customers' },
-      () => {
-        console.log('Changement détecté dans customers');
-        loadCustomers();
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'products' },
-      () => {
-        console.log('Changement détecté dans products');
-        loadProducts();
-      }
-    )
-    .subscribe((status) => {
-      console.log('Statut de la souscription:', status);
-    });
+  // Rafraîchir les données toutes les 5 secondes
+  setInterval(() => {
+    console.log('Rafraîchissement automatique...');
+    loadCustomers();
+    loadHistory();
+  }, 5000);
 }
 
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';const {error}=await supabase.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)$('loginError').textContent='Identifiants incorrects.'});
