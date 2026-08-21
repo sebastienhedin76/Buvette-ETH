@@ -143,7 +143,7 @@ function renderMembers() {
   }
 }
 async function deleteMember(memberId) {
-  // 1. Récupérer le membre pour vérifier son solde
+  // 1. Lire le solde depuis la VUE customer_balances
   const { data: member, error: fetchError } = await supabase
     .from('customer_balances')
     .select('balance_cents')
@@ -155,43 +155,38 @@ async function deleteMember(memberId) {
     return;
   }
 
-  // 2. Vérifier si le solde est à 0
+  // 2. Vérifier que le solde est à 0
   if (member.balance_cents !== 0) {
     toast('Impossible de supprimer : le solde doit être à 0 €', true);
     return;
   }
 
-  // 3. Demander confirmation
+  // 3. Confirmation
   if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
     return;
   }
 
-  // 4. Supprimer les transactions du membre
-  const { error: txError } = await supabase
-    .from('transactions')
-    .delete()
-    .eq('customer_id', memberId);
+  try {
+    // 4. Supprimer les transactions liées
+    const { error: txError } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('customer_id', memberId);
+    if (txError) throw txError;
 
-  if (txError) {
-    toast('Erreur lors de la suppression de l\'historique', true);
-    return;
+    // 5. Supprimer le membre depuis la TABLE customers
+    const { error: memberError } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', memberId);
+    if (memberError) throw memberError;
+
+    // 6. Rafraîchir la liste
+    toast('Membre supprimé avec succès');
+    await loadCustomers();
+  } catch (error) {
+    toast(`Erreur : ${error.message}`, true);
   }
-
-  // 5. Supprimer le membre
-  const { error: memberError } = await supabase
-    .from('customers')
-    .delete()
-    .eq('id', memberId);
-
-  if (memberError) {
-    toast('Erreur lors de la suppression du membre', true);
-    return;
-  }
-
-  // 6. Rafraîchir la liste
-  toast('Membre supprimé avec succès');
-  await loadCustomers();
-}
 
 function renderHistory(rows){$('historyList').innerHTML=`<table><thead><tr><th>Date</th><th>Adhérent</th><th>Opération</th><th>Montant</th><th>Staff</th></tr></thead><tbody>${rows.map(r=>{const credit=r.amount_cents>0;const label=r.type==='credit'?'Crédit '+(r.payment_method==='cheque'?'chèque':'espèces'):r.type==='reversal'?'Annulation':r.products?.name||'Débit';return `<tr><td>${new Date(r.created_at).toLocaleString('fr-FR')}</td><td>${esc(r.customers?.full_name)}</td><td>${esc(label)}</td><td class="amount ${credit?'credit':'debit'}">${credit?'+':''}${money(r.amount_cents)}</td><td>${esc(r.profiles?.display_name)}</td></tr>`}).join('')}</tbody></table>`}
 
