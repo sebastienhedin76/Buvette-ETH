@@ -41,7 +41,7 @@
     <section id="saleTab" class="tab active">
       <div class="customer-panel card">
         <label for="customerSearch">Adhérent</label>
-        <div class="search-row"><input id="customerSearch" placeholder="Nom ou n° d’adhérent" autocomplete="off"/><button id="clearCustomer" class="ghost">Effacer</button></div>
+        <div class="search-row"><input id="customerSearch" placeholder="Nom de l’adhérent" autocomplete="off"/><button id="clearCustomer" class="ghost">Effacer</button></div>
         <div id="customerResults" class="results"></div>
         <div id="selectedCustomer" class="selected hidden">
           <div><strong id="selectedName"></strong><small id="selectedNumber"></small></div>
@@ -54,12 +54,11 @@
 
     <section id="membersTab" class="tab">
       <div class="split">
-        <form id="memberForm" class="card">
-          <h2>Nouvel adhérent</h2>
-          <label>Nom complet<input id="memberName" required maxlength="100" /></label>
-          <label>N° d’adhérent<input id="memberNumber" required maxlength="30" /></label>
-          <button class="primary" type="submit">Ajouter</button>
-        </form>
+       <form id="memberForm" class="card">
+  <h2>Nouvel adhérent</h2>
+  <label>Nom complet<input id="memberName" required maxlength="100" /></label>
+  <button class="primary" type="submit">Ajouter</button>
+</form>
         <form id="creditForm" class="card">
           <h2>Créditer un compte</h2>
           <label>Adhérent<select id="creditCustomer" required></select></label>
