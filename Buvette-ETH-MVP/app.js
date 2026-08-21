@@ -162,7 +162,9 @@ async function deleteMember(memberId) {
   }
 
   // 3. Demander confirmation
-  if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return;
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
+    return;
+  }
 
   // 4. Supprimer les transactions du membre
   const { error: txError } = await supabase
@@ -191,9 +193,6 @@ async function deleteMember(memberId) {
   await loadCustomers();
 }
 
-  toast('Membre supprimé avec succès');
-  await loadCustomers(); // Rafraîchit la liste des membres
-}
 function renderHistory(rows){$('historyList').innerHTML=`<table><thead><tr><th>Date</th><th>Adhérent</th><th>Opération</th><th>Montant</th><th>Staff</th></tr></thead><tbody>${rows.map(r=>{const credit=r.amount_cents>0;const label=r.type==='credit'?'Crédit '+(r.payment_method==='cheque'?'chèque':'espèces'):r.type==='reversal'?'Annulation':r.products?.name||'Débit';return `<tr><td>${new Date(r.created_at).toLocaleString('fr-FR')}</td><td>${esc(r.customers?.full_name)}</td><td>${esc(label)}</td><td class="amount ${credit?'credit':'debit'}">${credit?'+':''}${money(r.amount_cents)}</td><td>${esc(r.profiles?.display_name)}</td></tr>`}).join('')}</tbody></table>`}
 
 $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(profile.role!=='admin')return;const payload={name:$('productName').value.trim(),price_cents:cents($('productPrice').value),color:$('productColor').value};const id=$('productId').value;const {error}=id?await supabase.from('products').update(payload).eq('id',id):await supabase.from('products').insert(payload);if(error)return toast(error.message,true);resetProductForm();toast('Produit enregistré')});
