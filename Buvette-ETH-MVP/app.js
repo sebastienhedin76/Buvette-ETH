@@ -66,7 +66,7 @@ function renderSelected() {
   }
 
   // Export de l'historique en Excel
-document.getElementById('exportHistoryBtn').addEventListener('click', async () => {
+$('exportHistoryBtn').addEventListener('click', async () => {
   const { data, error } = await supabase
     .from('transactions')
     .select('created_at,type,amount_cents,payment_method,cheque_reference,note,customers(full_name),products(name),profiles(display_name)')
