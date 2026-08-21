@@ -65,20 +65,14 @@ function renderSelected() {
     $('selectedBalance').style.color = selected.balance_cents < 0 ? '#ff4444' : 'inherit';
   }
 
- // Export de l'historique en Excel
-console.log('Initialisation du bouton export...');
+// Export de l'historique en Excel
 const exportBtn = $('exportHistoryBtn');
-console.log('Bouton trouvé:', exportBtn);
-
 if (exportBtn) {
-  exportBtn.addEventListener('click', async () => {
-    console.log('Clic sur export détecté');
+  exportBtn.onclick = async () => {
     const { data, error } = await supabase
       .from('transactions')
       .select('created_at,type,amount_cents,payment_method,cheque_reference,note,customers(full_name),products(name),profiles(display_name)')
       .order('created_at', { ascending: false });
-
-    console.log('Données récupérées:', data, error);
 
     if (error) return toast(error.message, true);
 
@@ -93,23 +87,22 @@ if (exportBtn) {
       t.customers?.full_name || '',
       t.products?.name || '',
       t.profiles?.display_name || ''
-    ].map(field => `"${field.replace(/"/g, '""')}"`).join(';'));
+    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(';'));
 
     const csv = [headers.join(';'), ...rows].join('\n');
-    console.log('CSV généré:', csv.substring(0, 100));
-    
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     a.href = url;
-    a.download = `historique_${new Date().toLocaleDateString('fr-FR')}.csv`;
-    console.log('Déclenchement du téléchargement:', a.download);
+    a.download = `historique_${dateStr}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('Historique exporté');
-  });
-} else {
-  console.error('Bouton exportHistoryBtn non trouvé !');
+  };
 }
   renderProducts();
 }
