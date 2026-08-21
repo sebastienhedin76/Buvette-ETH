@@ -127,7 +127,7 @@ function renderMembers() {
         ${customers.map(c => `
           <tr>
             <td>${esc(c.full_name)}</td>
-            <td><strong>${money(c.balance_cents)}</strong></td>
+           `<td><strong style="color: ${c.balance_cents < 0 ? '#ff4444' : 'inherit'}">${money(c.balance_cents)}</strong></td>`
             ${profile.role === 'admin' ? `<td><button class="danger delete-member" data-id="${c.id}">Supprimer</button></td>` : ''}
           </tr>
         `).join('')}
