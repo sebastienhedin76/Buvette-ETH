@@ -66,42 +66,62 @@ function renderSelected() {
   }
 
 // Export de l'historique en Excel
+console.log('Setup export button...');
 const exportBtn = $('exportHistoryBtn');
+console.log('Export button:', exportBtn);
+
 if (exportBtn) {
   exportBtn.onclick = async () => {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('created_at,type,amount_cents,payment_method,cheque_reference,note,customers(full_name),products(name),profiles(display_name)')
-      .order('created_at', { ascending: false });
+    console.log('Export clicked!');
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('created_at,type,amount_cents,payment_method,cheque_reference,note,customers(full_name),products(name),profiles(display_name)')
+        .order('created_at', { ascending: false });
 
-    if (error) return toast(error.message, true);
+      console.log('Data fetched:', data?.length, 'Error:', error);
 
-    const headers = ['Date', 'Type', 'Montant', 'Moyen de paiement', 'Référence chèque', 'Note', 'Adhérent', 'Produit', 'Utilisateur'];
-    const rows = data.map(t => [
-      new Date(t.created_at).toLocaleString('fr-FR'),
-      t.type === 'credit' ? 'Crédit' : 'Débit',
-      (t.amount_cents / 100).toFixed(2) + ' €',
-      t.payment_method === 'cash' ? 'Espèces' : t.payment_method === 'cheque' ? 'Chèque' : 'Virement',
-      t.cheque_reference || '',
-      t.note || '',
-      t.customers?.full_name || '',
-      t.products?.name || '',
-      t.profiles?.display_name || ''
-    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(';'));
+      if (error) return toast(error.message, true);
 
-    const csv = [headers.join(';'), ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const d = new Date();
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    a.href = url;
-    a.download = `historique_${dateStr}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast('Historique exporté');
+      const headers = ['Date', 'Type', 'Montant', 'Moyen de paiement', 'Référence chèque', 'Note', 'Adhérent', 'Produit', 'Utilisateur'];
+      const rows = data.map(t => [
+        new Date(t.created_at).toLocaleString('fr-FR'),
+        t.type === 'credit' ? 'Crédit' : 'Débit',
+        (t.amount_cents / 100).toFixed(2) + ' €',
+        t.payment_method === 'cash' ? 'Espèces' : t.payment_method === 'cheque' ? 'Chèque' : 'Virement',
+        t.cheque_reference || '',
+        t.note || '',
+        t.customers?.full_name || '',
+        t.products?.name || '',
+        t.profiles?.display_name || ''
+      ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(';'));
+
+      const csv = [headers.join(';'), ...rows].join('\n');
+      console.log('CSV length:', csv.length);
+      
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      console.log('Blob URL created:', url);
+      
+      const a = document.createElement('a');
+      const d = new Date();
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      a.href = url;
+      a.download = `historique_${dateStr}.csv`;
+      console.log('Download filename:', a.download);
+      
+      document.body.appendChild(a);
+      console.log('Element appended');
+      
+      a.click();
+      console.log('Click triggered');
+      
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Historique exporté');
+    } catch (e) {
+      console.error('Export error:', e);
+    }
   };
 }
   renderProducts();
