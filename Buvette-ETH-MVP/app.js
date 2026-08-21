@@ -113,7 +113,50 @@ $('memberForm').addEventListener('submit',async e=>{e.preventDefault();const {er
 function renderCreditOptions(){$('creditCustomer').innerHTML='<option value="">Choisir…</option>'+customers.filter(c=>c.active).map(c=>`<option value="${c.id}">${esc(c.full_name)} — ${esc(c.member_number)} (${money(c.balance_cents)})</option>`).join('')}
 $('paymentMethod').onchange=()=>{$('chequeRefLabel').classList.toggle('hidden',$('paymentMethod').value!=='cheque');$('chequeRef').required=$('paymentMethod').value==='cheque'};
 $('creditForm').addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.rpc('credit_customer',{p_customer_id:$('creditCustomer').value,p_amount_cents:cents($('creditAmount').value),p_payment_method:$('paymentMethod').value,p_cheque_reference:$('paymentMethod').value==='cheque'?$('chequeRef').value.trim():null,p_request_id:crypto.randomUUID()});if(error)return toast(error.message,true);e.target.reset();$('chequeRefLabel').classList.add('hidden');toast('Compte crédité')});
-function renderMembers(){$('memberList').innerHTML=`<table><thead><tr><th>Adhérent</th><th>N°</th><th>Solde</th></tr></thead><tbody>${customers.map(c=>`<tr><td>${esc(c.full_name)}</td><td>${esc(c.member_number)}</td><td><strong>${money(c.balance_cents)}</strong></td></tr>`).join('')}</tbody></table>`}
+function renderMembers() {
+  $('memberList').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Adhérent</th>
+          <th>Solde</th>
+          ${profile.role === 'admin' ? '<th>Actions</th>' : ''}
+        </tr>
+      </thead>
+      <tbody>
+        ${customers.map(c => `
+          <tr>
+            <td>${esc(c.full_name)}</td>
+            <td><strong>${money(c.balance_cents)}</strong></td>
+            ${profile.role === 'admin' ? `<td><button class="danger delete-member" data-id="${c.id}">Supprimer</button></td>` : ''}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  // Ajouter l'écouteur pour les boutons de suppression
+  if (profile.role === 'admin') {
+    document.querySelectorAll('.delete-member').forEach(btn => {
+      btn.onclick = () => deleteMember(btn.dataset.id);
+    });
+  }
+}
+async function deleteMember(memberId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return;
+
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .eq('id', memberId);
+
+  if (error) {
+    toast(error.message, true);
+    return;
+  }
+
+  toast('Membre supprimé avec succès');
+}
 function renderHistory(rows){$('historyList').innerHTML=`<table><thead><tr><th>Date</th><th>Adhérent</th><th>Opération</th><th>Montant</th><th>Staff</th></tr></thead><tbody>${rows.map(r=>{const credit=r.amount_cents>0;const label=r.type==='credit'?'Crédit '+(r.payment_method==='cheque'?'chèque':'espèces'):r.type==='reversal'?'Annulation':r.products?.name||'Débit';return `<tr><td>${new Date(r.created_at).toLocaleString('fr-FR')}</td><td>${esc(r.customers?.full_name)}</td><td>${esc(label)}</td><td class="amount ${credit?'credit':'debit'}">${credit?'+':''}${money(r.amount_cents)}</td><td>${esc(r.profiles?.display_name)}</td></tr>`}).join('')}</tbody></table>`}
 
 $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(profile.role!=='admin')return;const payload={name:$('productName').value.trim(),price_cents:cents($('productPrice').value),color:$('productColor').value};const id=$('productId').value;const {error}=id?await supabase.from('products').update(payload).eq('id',id):await supabase.from('products').insert(payload);if(error)return toast(error.message,true);resetProductForm();toast('Produit enregistré')});
