@@ -34,11 +34,38 @@ async function loadHistory(){
   const {data,error}=await supabase.from('transactions').select('id,created_at,type,amount_cents,payment_method,cheque_reference,note,reversal_of,customers(full_name),products(name),profiles(display_name)').order('created_at',{ascending:false}).limit(100);
   if(error)return toast(error.message,true);renderHistory(data||[])
 }
-function subscribeRealtime(){
-  supabase.removeAllChannels();supabase.channel('buvette-live')
-    .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},()=>{loadCustomers();loadHistory()})
-    .on('postgres_changes',{event:'*',schema:'public',table:'customers'},loadCustomers)
-    .on('postgres_changes',{event:'*',schema:'public',table:'products'},loadProducts).subscribe();
+function subscribeRealtime() {
+  supabase.removeAllChannels();
+  
+  supabase.channel('buvette-live')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'transactions' },
+      () => {
+        console.log('Changement détecté dans transactions');
+        loadCustomers();
+        loadHistory();
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'customers' },
+      () => {
+        console.log('Changement détecté dans customers');
+        loadCustomers();
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'products' },
+      () => {
+        console.log('Changement détecté dans products');
+        loadProducts();
+      }
+    )
+    .subscribe((status) => {
+      console.log('Statut de la souscription:', status);
+    });
 }
 
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';const {error}=await supabase.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)$('loginError').textContent='Identifiants incorrects.'});
