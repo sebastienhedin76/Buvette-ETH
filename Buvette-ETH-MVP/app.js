@@ -143,17 +143,53 @@ function renderMembers() {
   }
 }
 async function deleteMember(memberId) {
+  // 1. Récupérer le membre pour vérifier son solde
+  const { data: member, error: fetchError } = await supabase
+    .from('customer_balances')
+    .select('balance_cents')
+    .eq('id', memberId)
+    .single();
+
+  if (fetchError) {
+    toast('Impossible de vérifier le solde du membre', true);
+    return;
+  }
+
+  // 2. Vérifier si le solde est à 0
+  if (member.balance_cents !== 0) {
+    toast('Impossible de supprimer : le solde doit être à 0 €', true);
+    return;
+  }
+
+  // 3. Demander confirmation
   if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return;
 
-  const { error } = await supabase
+  // 4. Supprimer les transactions du membre
+  const { error: txError } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('customer_id', memberId);
+
+  if (txError) {
+    toast('Erreur lors de la suppression de l\'historique', true);
+    return;
+  }
+
+  // 5. Supprimer le membre
+  const { error: memberError } = await supabase
     .from('customers')
     .delete()
     .eq('id', memberId);
 
-  if (error) {
-    toast(error.message, true);
+  if (memberError) {
+    toast('Erreur lors de la suppression du membre', true);
     return;
   }
+
+  // 6. Rafraîchir la liste
+  toast('Membre supprimé avec succès');
+  await loadCustomers();
+}
 
   toast('Membre supprimé avec succès');
   await loadCustomers(); // Rafraîchit la liste des membres
