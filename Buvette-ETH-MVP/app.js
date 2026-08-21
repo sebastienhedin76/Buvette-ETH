@@ -49,8 +49,8 @@ document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>{document.q
 
 $('customerSearch').addEventListener('input',()=>{
   const q=$('customerSearch').value.trim().toLowerCase();if(!q){$('customerResults').innerHTML='';return}
-  const hits=customers.filter(c=>c.active&&(c.full_name.toLowerCase().includes(q)||c.member_number.toLowerCase().includes(q))).slice(0,8);
-  $('customerResults').innerHTML=hits.map(c=>`<button class="result" data-id="${c.id}"><span>${esc(c.full_name)}<br><small>${esc(c.member_number)}</small></span><strong>${money(c.balance_cents)}</strong></button>`).join('')||'<div class="result">Aucun résultat</div>';
+  const hits=customers.filter(c=>c.active&&c.full_name.toLowerCase().includes(q)).slice(0,8);
+  $('customerResults').innerHTML=hits.map(c=>`<button class="result" data-id="${c.id}"><span>${esc(c.full_name)}</span><strong>${money(c.balance_cents)}</strong></button>`).join('')||'<div class="result">Aucun résultat</div>';
   document.querySelectorAll('.result[data-id]').forEach(b=>b.onclick=()=>chooseCustomer(b.dataset.id));
 });
 function chooseCustomer(id){selected=customers.find(c=>c.id===id);$('customerSearch').value='';$('customerResults').innerHTML='';renderSelected()}
