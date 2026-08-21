@@ -53,10 +53,16 @@ $('customerSearch').addEventListener('input',()=>{
 });
 function chooseCustomer(id){selected=customers.find(c=>c.id===id);$('customerSearch').value='';$('customerResults').innerHTML='';renderSelected()}
 $('clearCustomer').onclick=()=>{selected=null;renderSelected()};
-function renderSelected(){
-  $('selectedCustomer').classList.toggle('hidden',!selected);$('selectHint').classList.toggle('hidden',!!selected);
-  if(selected){$('selectedName').textContent=selected.full_name;$('selectedNumber').textContent=selected.member_number;$('selectedBalance').textContent=money(selected.balance_cents);
-$('selectedBalance').style.color = selected.balance_cents < 0 ? '#ff4444' : 'inherit';}
+function renderSelected() {
+  $('selectedCustomer').classList.toggle('hidden', !selected);
+  $('selectHint').classList.toggle('hidden', !!selected);
+
+  if (selected) {
+    $('selectedName').textContent = selected.full_name;
+    $('selectedBalance').textContent = money(selected.balance_cents);
+    $('selectedBalance').style.color = selected.balance_cents < 0 ? '#ff4444' : 'inherit';
+  }
+
   renderProducts();
 }
 function renderProducts(){
