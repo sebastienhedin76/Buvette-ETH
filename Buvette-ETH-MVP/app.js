@@ -102,8 +102,6 @@ $('exportHistoryBtn').onclick = async () => {
   URL.revokeObjectURL(url);
   toast('Historique exporté');
 };
-  renderProducts();
-}
 function renderProducts(){
   $('products').innerHTML=products.filter(p=>p.active).map(p=>`<button class="product" style="background:${esc(p.color)}" data-id="${p.id}" ${!selected?'disabled':''}><span>${esc(p.name)}</span><strong>${money(p.price_cents)}</strong></button>`).join('');
   document.querySelectorAll('.product[data-id]').forEach(b=>b.onclick=()=>debit(b.dataset.id,b));
