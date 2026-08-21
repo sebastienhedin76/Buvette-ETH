@@ -62,12 +62,49 @@ function renderProducts(){
   $('products').innerHTML=products.filter(p=>p.active).map(p=>`<button class="product" style="background:${esc(p.color)}" data-id="${p.id}" ${!selected?'disabled':''}><span>${esc(p.name)}</span><strong>${money(p.price_cents)}</strong></button>`).join('');
   document.querySelectorAll('.product[data-id]').forEach(b=>b.onclick=()=>debit(b.dataset.id,b));
 }
-async function debit(productId,button){
-  if(!selected)return;button.disabled=true;
-  const requestId=crypto.randomUUID();const {data,error}=await supabase.rpc('purchase_product',{p_customer_id:selected.id,p_product_id:productId,p_request_id:requestId});
-  button.disabled=false;if(error)return toast(error.message.includes('INSUFFICIENT_FUNDS')?'Solde insuffisant':error.message,true);
-  const product=products.find(p=>p.id===productId);selected.balance_cents=data.new_balance_cents;renderSelected();lastDebit=data.transaction_id;
-  $('undoText').textContent=`${product.name} débité (${money(product.price_cents)})`;$('undoBar').classList.remove('hidden');clearTimeout(undoTimer);undoTimer=setTimeout(hideUndo,10000);
+async function debit(productId, button) {
+  if (!selected) return;
+
+  button.disabled = true;
+
+  const requestId = crypto.randomUUID();
+  const { data, error } = await supabase.rpc('purchase_product', {
+    p_customer_id: selected.id,
+    p_product_id: productId,
+    p_request_id: requestId
+  });
+
+  button.disabled = false;
+
+  if (error) {
+    return toast(
+      error.message.includes('INSUFFICIENT_FUNDS')
+        ? 'Solde insuffisant'
+        : error.message,
+      true
+    );
+  }
+
+  // Supabase peut renvoyer une ligne dans un tableau.
+  const result = Array.isArray(data) ? data[0] : data;
+
+  if (!result || result.new_balance_cents == null) {
+    await loadCustomers();
+    return toast('Débit effectué, actualisation du solde', false);
+  }
+
+  const product = products.find(p => p.id === productId);
+  selected.balance_cents = Number(result.new_balance_cents);
+  lastDebit = result.transaction_id;
+
+  renderSelected();
+
+  $('undoText').textContent =
+    `${product.name} débité (${money(product.price_cents)})`;
+  $('undoBar').classList.remove('hidden');
+
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(hideUndo, 10000);
 }
 function hideUndo(){$('undoBar').classList.add('hidden');lastDebit=null}
 $('undoBtn').onclick=async()=>{if(!lastDebit)return;const {error}=await supabase.rpc('reverse_transaction',{p_transaction_id:lastDebit});if(error)return toast(error.message,true);hideUndo();toast('Débit annulé')};
